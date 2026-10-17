@@ -74,3 +74,16 @@ def real_sales():
     out = merged[["date"]].copy()
     out["value"] = merged["value_sales"] / (merged["value_cpi"] / 100)
     return out
+
+def relative_price():
+    """Apparel CPI divided by all-items CPI, indexed to 2015 = 100.
+
+    Above 100: clothes cost more relative to everything else than in 2015.
+    Below 100: clothes got relatively cheaper. NaN months are kept.
+    """
+    apparel = get_series("CPIAPPSL")
+    all_items = get_series("CPIAUCSL")
+    merged = apparel.merge(all_items, on="date", suffixes=("_app", "_all"))
+    out = merged[["date"]].copy()
+    out["value"] = merged["value_app"] / merged["value_all"]
+    return index_to(out)
