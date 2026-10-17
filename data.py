@@ -47,3 +47,10 @@ def yoy(df):
 def latest(df):
     """Most recent non-missing row (handles NaN months like Oct 2025 CPI)."""
     return df.dropna().iloc[-1]
+
+def gap(a, b):
+    """a minus b on matching dates (e.g., apparel YoY minus all-items YoY)."""
+    merged = a.merge(b, on="date", suffixes=("_a", "_b"))
+    out = merged[["date"]].copy()
+    out["value"] = merged["value_a"] - merged["value_b"]
+    return out

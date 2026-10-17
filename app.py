@@ -1,7 +1,7 @@
 import dash
 from dash import Dash, html, dcc
 
-app = Dash(__name__, use_pages=True, title="The Apparel Report")
+app = Dash(__name__, use_pages=True, suppress_callback_exceptions=True)
 server = app.server  # needed later for deployment
 
 app.layout = html.Div([
