@@ -1,26 +1,38 @@
+"""Demand page: is the shopper spending, and how much is just inflation?"""
 import dash
-from dash import html, dcc, callback, Input, Output
+import pandas as pd
 import plotly.express as px
+from dash import Input, Output, callback, dcc, html
 
-from data import get_series, latest, yoy
+from data import get_series, latest, real_sales, yoy
+from components import kpi_card
 
-dash.register_page(__name__, path="/", name="Demand", order = 1,
+dash.register_page(__name__, path="/", name="Demand", order=1,
                    title="Demand | The Apparel Report")
 
+NOMINAL = "Nominal (current dollars)"
+REAL = "Real (2015 dollars, apparel CPI-adjusted)"
 
-def kpi_card(label, value_text, date):
-    return html.Div([
-        html.P(label),
-        html.H2(value_text),
-        html.P(f"{date:%b %Y}"),
-    ], style={"border": "1px solid #ccc", "padding": "12px", "flex": "1"})
+
+def sales_long():
+    """Nominal and real sales stacked: date, value, series. NaNs kept on purpose."""
+    nominal = get_series("RSCCAS")
+    nominal["series"] = NOMINAL
+    real = real_sales()
+    real["series"] = REAL
+    return pd.concat([nominal, real])
 
 
 def layout(**kwargs):
     sales = get_series("RSCCAS")
     sentiment = latest(get_series("UMCSENT"))
     saving = latest(get_series("PSAVERT"))
-    sales_yoy = latest(yoy(sales))
+
+    # Latest month where BOTH nominal and real YoY exist, so they share one date
+    both = (yoy(sales)
+            .merge(yoy(real_sales()), on="date", suffixes=("_nom", "_real"))
+            .dropna()
+            .iloc[-1])
 
     first_year = int(sales["date"].dt.year.min())
     last_year = int(sales["date"].dt.year.max())
@@ -30,11 +42,13 @@ def layout(**kwargs):
 
         html.Div([
             kpi_card("Clothing store sales, YoY",
-                     f"{sales_yoy['value']:+.1%}", sales_yoy["date"]),
+                     f"{both['value_nom']:+.1%}",
+                     f"{both['value_real']:+.1%} after price changes · "
+                     f"{both['date']:%b %Y}"),
             kpi_card("Consumer sentiment (index)",
-                     f"{sentiment['value']:.1f}", sentiment["date"]),
+                     f"{sentiment['value']:.1f}", f"{sentiment['date']:%b %Y}"),
             kpi_card("Personal saving rate",
-                     f"{saving['value']:.1f}%", saving["date"]),
+                     f"{saving['value']:.1f}%", f"{saving['date']:%b %Y}"),
         ], style={"display": "flex", "gap": "16px"}),
 
         dcc.Graph(id="demand-chart"),
@@ -45,16 +59,23 @@ def layout(**kwargs):
             value=[first_year, last_year],
             marks={y: str(y) for y in range(first_year, last_year + 1, 5)},
         ),
+
+        html.P("Real sales are an approximation: clothing store sales include "
+               "some non-clothing items, and apparel CPI is a proxy deflator. "
+               "The break in Oct 2025 reflects missing CPI data (government "
+               "shutdown); it is not filled in.",
+               style={"fontSize": "12px"}),
     ])
 
 
 @callback(Output("demand-chart", "figure"), Input("demand-years", "value"))
 def update_chart(years):
     start, end = years
-    df = get_series("RSCCAS")
+    df = sales_long()
     df = df[df["date"].dt.year.between(start, end)]
     return px.line(
-        df, x="date", y="value",
-        title="Clothing & accessories store sales (monthly, seasonally adjusted)",
-        labels={"date": "", "value": "Millions of dollars"},
+        df, x="date", y="value", color="series",
+        title="Clothing & accessories store sales: nominal vs. real "
+              "(monthly, seasonally adjusted)",
+        labels={"date": "", "value": "Millions of dollars", "series": ""},
     )

@@ -5,6 +5,7 @@ import plotly.express as px
 from dash import Input, Output, callback, dcc, html
 
 from data import gap, get_series, latest, yoy
+from components import kpi_card
 
 dash.register_page(__name__, path="/price", name="Price", order = 2,
                    title="Price | The Apparel Report")
@@ -16,15 +17,6 @@ CATEGORIES = {
     "Women's & girls'": "CUSR0000SAA2",
     "Footwear": "CUSR0000SEAE",
 }
-
-
-def kpi_card(label, value_text, note):
-    return html.Div([
-        html.P(label),
-        html.H2(value_text),
-        html.P(note),
-    ], style={"border": "1px solid #ccc", "padding": "12px", "flex": "1"})
-
 
 def category_yoy():
     """All categories stacked in long format: date, value, category."""

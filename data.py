@@ -61,3 +61,16 @@ def index_to(df, year=2015):
     out = df.copy()
     out["value"] = out["value"] / base * 100
     return out
+
+def real_sales():
+    """Clothing store sales in 2015 dollars, deflated by apparel CPI.
+
+    Left merge keeps every sales month. Months with no CPI value
+    (like Oct 2025) stay as NaN, so the chart shows an honest break.
+    """
+    sales = get_series("RSCCAS")
+    cpi = index_to(get_series("CPIAPPSL"))  # 2015 = 100
+    merged = sales.merge(cpi, on="date", how="left", suffixes=("_sales", "_cpi"))
+    out = merged[["date"]].copy()
+    out["value"] = merged["value_sales"] / (merged["value_cpi"] / 100)
+    return out

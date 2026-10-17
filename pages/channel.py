@@ -5,6 +5,7 @@ import plotly.express as px
 from dash import Input, Output, callback, dcc, html
 
 from data import get_series, index_to, latest, yoy
+from components import kpi_card
 
 dash.register_page(__name__, path="/channel", name="Channel", order=3,
                    title="Channel | The Apparel Report")
@@ -14,14 +15,6 @@ CHANNELS = {
     "Department stores": "RSDSELD",
     "Clothing stores": "RSCCAS",
 }
-
-
-def kpi_card(label, value_text, note):
-    return html.Div([
-        html.P(label),
-        html.H2(value_text),
-        html.P(note),
-    ], style={"border": "1px solid #ccc", "padding": "12px", "flex": "1"})
 
 
 def channel_index():
