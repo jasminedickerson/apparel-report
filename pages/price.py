@@ -6,7 +6,7 @@ from dash import Input, Output, callback, dcc, html
 
 from data import gap, get_series, latest, yoy
 
-dash.register_page(__name__, path="/price", name="Price",
+dash.register_page(__name__, path="/price", name="Price", order = 2,
                    title="Price | The Apparel Report")
 
 CATEGORIES = {

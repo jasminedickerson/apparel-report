@@ -4,7 +4,7 @@ import plotly.express as px
 
 from data import get_series, latest, yoy
 
-dash.register_page(__name__, path="/", name="Demand",
+dash.register_page(__name__, path="/", name="Demand", order = 1,
                    title="Demand | The Apparel Report")
 
 

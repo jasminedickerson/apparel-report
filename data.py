@@ -54,3 +54,10 @@ def gap(a, b):
     out = merged[["date"]].copy()
     out["value"] = merged["value_a"] - merged["value_b"]
     return out
+
+def index_to(df, year=2015):
+    """Rebase a series so the chosen year's average = 100."""
+    base = df.loc[df["date"].dt.year == year, "value"].mean()
+    out = df.copy()
+    out["value"] = out["value"] / base * 100
+    return out
